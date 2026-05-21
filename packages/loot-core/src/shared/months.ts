@@ -83,12 +83,39 @@ export function _parse(value: DateLike): Date {
 
 export const parseDate = _parse;
 
+let customPeriods: Map<string, { start: string; end: string }> = new Map();
+
+export function setCustomPeriods(
+  periods: { month: string; start_date: string; end_date: string }[],
+) {
+  customPeriods = new Map(
+    periods.map(p => [p.month, { start: p.start_date, end: p.end_date }]),
+  );
+}
+
 export function yearFromDate(date: DateLike): string {
   return d.format(_parse(date), 'yyyy');
 }
 
 export function monthFromDate(date: DateLike): string {
-  return d.format(_parse(date), 'yyyy-MM');
+  const dayStr = dayFromDate(date);
+  for (const [month, bounds] of customPeriods.entries()) {
+    if (dayStr >= bounds.start && dayStr <= bounds.end) {
+      return month;
+    }
+  }
+
+  const naturalMonth = d.format(_parse(date), 'yyyy-MM');
+  const naturalBounds = customPeriods.get(naturalMonth);
+  if (naturalBounds) {
+    if (dayStr < naturalBounds.start) {
+      return prevMonth(naturalMonth);
+    } else if (dayStr > naturalBounds.end) {
+      return nextMonth(naturalMonth);
+    }
+  }
+
+  return naturalMonth;
 }
 
 export function isValidYearMonth(value: string): boolean {
@@ -244,6 +271,15 @@ export function isCurrentDay(day: DateLike): boolean {
 // TODO: This doesn't really fit in this module anymore, should
 // probably live elsewhere
 export function bounds(month: DateLike): { start: number; end: number } {
+  const monthStr = typeof month === 'string' ? month : monthFromDate(month);
+  const custom = customPeriods.get(monthStr);
+  if (custom) {
+    return {
+      start: parseInt(custom.start.replace(/-/g, '')),
+      end: parseInt(custom.end.replace(/-/g, '')),
+    };
+  }
+
   return {
     start: parseInt(d.format(d.startOfMonth(_parse(month)), 'yyyyMMdd')),
     end: parseInt(d.format(d.endOfMonth(_parse(month)), 'yyyyMMdd')),

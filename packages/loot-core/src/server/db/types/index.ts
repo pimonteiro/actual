@@ -266,6 +266,14 @@ export type DbDashboard = {
   tombstone: 1 | 0;
 };
 
+export type DbCustomBudgetPeriod = {
+  id: string;
+  month: string;
+  start_date: string;
+  end_date: string;
+  tombstone: 1 | 0;
+};
+
 export type DbViewTransactionInternal = {
   id: DbTransaction['id'];
   is_parent: DbTransaction['isParent'];

@@ -297,4 +297,46 @@ describe('Database', () => {
     expect(rows.length).toBe(1);
     expect(rows[0].id).toBe('trans1');
   });
+
+  test('GET_MONTH sql function works with custom periods', async () => {
+    // 1. Initially without custom periods, GET_MONTH on a date should return the natural month integer
+    let res = db.runQuery<{ m: number }>(
+      'SELECT GET_MONTH(20260427) as m',
+      [],
+      true,
+    );
+    expect(res[0].m).toBe(202604);
+
+    // 2. Set custom periods
+    db.runQuery(
+      `INSERT INTO custom_budget_periods (id, month, start_date, end_date, tombstone)
+       VALUES ('1', '2026-05', '2026-04-27', '2026-05-28', 0)`,
+    );
+    // Reload custom budget periods to set them in-memory
+    const { loadCustomBudgetPeriods } = await import('../budget/base');
+    await loadCustomBudgetPeriods();
+
+    try {
+      // 3. Date 2026-04-27 is inside the custom period for 2026-05, should return 202605
+      res = db.runQuery<{ m: number }>(
+        'SELECT GET_MONTH(20260427) as m',
+        [],
+        true,
+      );
+      expect(res[0].m).toBe(202605);
+
+      // 4. Date 2026-05-29 is outside May's custom period (ends on 28th), and June has no override.
+      // It should cascade to June (202606)
+      res = db.runQuery<{ m: number }>(
+        'SELECT GET_MONTH(20260529) as m',
+        [],
+        true,
+      );
+      expect(res[0].m).toBe(202606);
+    } finally {
+      // Clean up custom budget periods
+      db.runQuery('DELETE FROM custom_budget_periods');
+      await loadCustomBudgetPeriods();
+    }
+  });
 });

@@ -17,6 +17,13 @@ export function getBudgetType() {
   return meta.budgetType || 'envelope';
 }
 
+export async function loadCustomBudgetPeriods() {
+  const periods = await db.all<db.DbCustomBudgetPeriod>(
+    'SELECT * FROM custom_budget_periods WHERE tombstone = 0',
+  );
+  monthUtils.setCustomPeriods(periods);
+}
+
 export function getBudgetRange(start: string, end: string) {
   start = monthUtils.getMonth(start);
   end = monthUtils.getMonth(end);
@@ -38,7 +45,14 @@ export function getBudgetRange(start: string, end: string) {
   return { start, end, range: monthUtils.rangeInclusive(start, end) };
 }
 
-export function createCategory(cat, sheetName, prevSheetName, start, end) {
+export function createCategory(
+  cat,
+  sheetName,
+  prevSheetName,
+  start,
+  end,
+  month,
+) {
   sheet.get().createDynamic(sheetName, 'sum-amount-' + cat.id, {
     initialValue: 0,
     run: () => {
@@ -46,7 +60,7 @@ export function createCategory(cat, sheetName, prevSheetName, start, end) {
       const rows = db.runQuery<{ amount: number }>(
         `SELECT SUM(amount) as amount FROM v_transactions_internal_alive t
            LEFT JOIN accounts a ON a.id = t.account
-         WHERE t.date >= ${start} AND t.date <= ${end}
+         WHERE GET_MONTH(t.date) = ${parseInt(month.replace(/-/g, ''))}
            AND category = '${cat.id}' AND a.offbudget = 0`,
         [],
         true,
@@ -202,6 +216,24 @@ export function triggerBudgetChanges(oldValues, newValues) {
           }
         } else if (table === 'accounts') {
           handleAccountChange(createdMonths, oldValue, newValue);
+        } else if (table === 'custom_budget_periods') {
+          void loadCustomBudgetPeriods().then(() => {
+            const meta = sheet.get().meta();
+            meta.createdMonths = new Set();
+
+            // Go through and force all the cells to be recomputed
+            const nodes = sheet.get().getNodes();
+            db.transaction(() => {
+              for (const name of nodes.keys()) {
+                const [sheetName, cellName] = name.split('!');
+                if (sheetName.match(/^budget\d+/)) {
+                  sheet.get().deleteCell(sheetName, cellName);
+                }
+              }
+            });
+
+            void createAllBudgets();
+          });
         }
       });
     });
@@ -257,8 +289,9 @@ export async function createBudget(months) {
       const prevSheetName = monthUtils.sheetForMonth(prevMonth);
 
       categories.forEach(cat => {
-        createCategory(cat, sheetName, prevSheetName, start, end);
+        createCategory(cat, sheetName, prevSheetName, start, end, month);
       });
+
       groups.forEach(group => {
         if (budgetType === 'envelope') {
           envelopeBudget.createCategoryGroup(group, sheetName);

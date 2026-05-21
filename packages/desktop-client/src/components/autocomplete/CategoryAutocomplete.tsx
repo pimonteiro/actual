@@ -4,6 +4,7 @@ import type {
   ComponentPropsWithoutRef,
   ComponentType,
   CSSProperties,
+  MouseEventHandler,
   ReactElement,
   ReactNode,
   SVGProps,
@@ -49,7 +50,9 @@ type CategoryListProps = {
   embedded?: boolean;
   footer?: ReactNode;
   renderSplitTransactionButton?: (
-    props: ComponentPropsWithoutRef<typeof SplitTransactionButton>,
+    props: ComponentPropsWithoutRef<typeof SplitTransactionButton> & {
+      key?: string;
+    },
   ) => ReactElement<typeof SplitTransactionButton>;
   renderCategoryItemGroupHeader?: (
     props: ComponentPropsWithoutRef<typeof ItemHeader>,
@@ -135,7 +138,13 @@ function CategoryList({
             const splitButtonProps = getItemProps
               ? getItemProps({ item: splitTransaction })
               : {};
-            const { onClick, ...restSplitButtonProps } = splitButtonProps;
+            const {
+              key: _key,
+              onClick,
+              ...restSplitButtonProps
+            } = splitButtonProps as Record<string, unknown> & {
+              onClick?: MouseEventHandler;
+            };
             return renderSplitTransactionButton({
               key: 'split',
               ...restSplitButtonProps,
@@ -192,7 +201,9 @@ type CategoryAutocompleteProps = ComponentProps<
   showBalances?: boolean;
   showSplitOption?: boolean;
   renderSplitTransactionButton?: (
-    props: ComponentPropsWithoutRef<typeof SplitTransactionButton>,
+    props: ComponentPropsWithoutRef<typeof SplitTransactionButton> & {
+      key?: string;
+    },
   ) => ReactElement<typeof SplitTransactionButton>;
   renderCategoryItemGroupHeader?: (
     props: ComponentPropsWithoutRef<typeof ItemHeader>,
@@ -386,10 +397,13 @@ function SplitTransactionButton({
   );
 }
 
-function defaultRenderSplitTransactionButton(
-  props: SplitTransactionButtonProps,
-): ReactElement<typeof SplitTransactionButton> {
-  return <SplitTransactionButton {...props} />;
+function defaultRenderSplitTransactionButton({
+  key,
+  ...props
+}: SplitTransactionButtonProps & { key?: string }): ReactElement<
+  typeof SplitTransactionButton
+> {
+  return <SplitTransactionButton key={key} {...props} />;
 }
 
 type CategoryItemProps = {

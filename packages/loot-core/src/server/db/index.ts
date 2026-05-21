@@ -24,6 +24,7 @@ import {
   accountModel,
   categoryGroupModel,
   categoryModel,
+  fromDateRepr,
   payeeModel,
   toDateRepr,
 } from '#server/models';
@@ -88,6 +89,49 @@ export function closeDatabase() {
 export function setDatabase(db_: Database) {
   db = db_;
   resetQueryCache();
+
+  if (db) {
+    const register = (name, fn) => {
+      if ('create_function' in db) {
+        db.create_function(name, fn);
+      } else {
+        // @ts-expect-error better-sqlite3
+        db.function(name, { deterministic: true }, fn);
+      }
+    };
+
+    register('GET_MONTH', (date: number | string) => {
+      if (!date) return null;
+      try {
+        const dateStr =
+          typeof date === 'number'
+            ? fromDateRepr(date)
+            : typeof date === 'string' && /^\d{8}$/.test(date)
+              ? fromDateRepr(parseInt(date))
+              : date;
+        const monthStr = monthUtils.monthFromDate(dateStr);
+        return parseInt(monthStr.replace(/-/g, ''));
+      } catch {
+        return null;
+      }
+    });
+
+    register('GET_YEAR', (date: number | string) => {
+      if (!date) return null;
+      try {
+        const dateStr =
+          typeof date === 'number'
+            ? fromDateRepr(date)
+            : typeof date === 'string' && /^\d{8}$/.test(date)
+              ? fromDateRepr(parseInt(date))
+              : date;
+        const yearStr = monthUtils.yearFromDate(dateStr);
+        return parseInt(yearStr);
+      } catch {
+        return null;
+      }
+    });
+  }
 }
 
 export function getDatabase() {

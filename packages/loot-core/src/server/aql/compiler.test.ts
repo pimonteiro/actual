@@ -589,7 +589,7 @@ describe('sheet language', () => {
       schemaWithRefs,
     );
     expect(result.sql).toMatch(
-      'WHERE (CAST(SUBSTR(transactions.date, 1, 6) AS integer) < CAST(SUBSTR(transactions.date, 1, 6) AS integer))',
+      'WHERE (GET_MONTH(transactions.date) < GET_MONTH(transactions.date))',
     );
 
     // Allows nesting functions
@@ -835,9 +835,7 @@ describe('Type conversions', () => {
         .serialize(),
       basicSchema,
     );
-    expect(result.sql).toMatch(
-      'WHERE (CAST(SUBSTR(transactions.date, 1, 6) AS integer) = 202001)',
-    );
+    expect(result.sql).toMatch('WHERE (GET_MONTH(transactions.date) = 202001)');
 
     // You can also specify a full date that is auto-converted to month
     result = generateSQLWithState(
@@ -847,9 +845,7 @@ describe('Type conversions', () => {
         .serialize(),
       basicSchema,
     );
-    expect(result.sql).toMatch(
-      'WHERE (CAST(SUBSTR(transactions.date, 1, 6) AS integer) = 202001)',
-    );
+    expect(result.sql).toMatch('WHERE (GET_MONTH(transactions.date) = 202001)');
 
     // You can also specify a full date that is auto-converted to month
     result = generateSQLWithState(
@@ -859,9 +855,7 @@ describe('Type conversions', () => {
         .serialize(),
       basicSchema,
     );
-    expect(result.sql).toMatch(
-      'WHERE (CAST(SUBSTR(transactions.date, 1, 4) AS integer) = 2020)',
-    );
+    expect(result.sql).toMatch('WHERE (GET_YEAR(transactions.date) = 2020)');
   });
 
   it('date fields are converted to months and years', () => {
@@ -875,7 +869,7 @@ describe('Type conversions', () => {
       schemaWithRefs,
     );
     expect(result.sql).toMatch(
-      'WHERE (CAST(SUBSTR(transactions2.date, 1, 6) AS integer) = CAST(SUBSTR(transactions1.date, 1, 6) AS integer))',
+      'WHERE (GET_MONTH(transactions2.date) = GET_MONTH(transactions1.date))',
     );
 
     // You can also specify a full date that is auto-converted to month
@@ -887,7 +881,7 @@ describe('Type conversions', () => {
       schemaWithRefs,
     );
     expect(result.sql).toMatch(
-      'WHERE (CAST(SUBSTR(transactions2.date, 1, 4) AS integer) = CAST(SUBSTR(transactions1.date, 1, 4) AS integer))',
+      'WHERE (GET_YEAR(transactions2.date) = GET_YEAR(transactions1.date))',
     );
   });
 

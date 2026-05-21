@@ -568,6 +568,7 @@ async function _loadBudget(id: Budget['id']): Promise<{
   }
 
   await db.loadClock();
+  await budget.loadCustomBudgetPeriods();
 
   if (prefs.getPrefs().resetClock) {
     // If we need to generate a fresh clock, we need to generate a new

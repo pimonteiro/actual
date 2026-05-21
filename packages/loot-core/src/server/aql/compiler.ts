@@ -20,6 +20,7 @@ function nativeDateToInt(date) {
 }
 
 function dateToInt(date) {
+  if (typeof date === 'number') return date;
   return parseInt(date.replace(/-/g, ''));
 }
 
@@ -284,10 +285,7 @@ function castInput(state, expr, type) {
         { literal: true },
       );
     } else {
-      return typed(
-        `CAST(SUBSTR(${expr2.value}, 1, 6) AS integer)`,
-        'date-month',
-      );
+      return typed(`GET_MONTH(${expr2.value})`, 'date-month');
     }
   } else if (type === 'date-year') {
     let expr2;
@@ -308,10 +306,7 @@ function castInput(state, expr, type) {
         literal: true,
       });
     } else {
-      return typed(
-        `CAST(SUBSTR(${expr2.value}, 1, 4) AS integer)`,
-        'date-year',
-      );
+      return typed(`GET_YEAR(${expr2.value})`, 'date-year');
     }
   } else if (type === 'id') {
     if (expr.type === 'string') {

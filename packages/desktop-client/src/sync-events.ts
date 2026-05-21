@@ -1,4 +1,5 @@
 import { listen, send } from '@actual-app/core/platform/client/connection';
+import * as monthUtils from '@actual-app/core/shared/months';
 import type { QueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 
@@ -88,6 +89,12 @@ export function listenForSyncEvent(store: AppStore, queryClient: QueryClient) {
       if (tables.includes('accounts')) {
         void queryClient.invalidateQueries({
           queryKey: accountQueries.lists(),
+        });
+      }
+
+      if (tables.includes('custom_budget_periods')) {
+        void send('budget/get-custom-periods').then(periods => {
+          monthUtils.setCustomPeriods(periods);
         });
       }
     } else if (event.type === 'error') {

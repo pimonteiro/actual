@@ -9,6 +9,8 @@ import m1722717601000 from '#migrations/1722717601000_reports_move_selected_cate
 import m1722804019000 from '#migrations/1722804019000_create_dashboard_table';
 import m1723665565000 from '#migrations/1723665565000_prefs';
 import m1765518577215 from '#migrations/1765518577215_multiple_dashboards';
+import m1779362396000 from '#migrations/1779362396000_add_custom_budget_periods';
+import m1779364108000 from '#migrations/1779364108000_fix_custom_budget_periods_constraints';
 import * as fs from '#platform/server/fs';
 import { logger } from '#platform/server/log';
 import * as sqlite from '#platform/server/sqlite';
@@ -22,6 +24,8 @@ const javascriptMigrations = {
   1722804019000: m1722804019000,
   1723665565000: m1723665565000,
   1765518577215: m1765518577215,
+  1779362396000: m1779362396000,
+  1779364108000: m1779364108000,
 };
 
 export async function withMigrationsDir(
@@ -77,19 +81,36 @@ export async function getAppliedMigrations(db: Database): Promise<number[]> {
 export async function getMigrationList(
   migrationsDir: string,
 ): Promise<string[]> {
-  const files = await fs.listDir(migrationsDir);
-  return files
-    .filter(name => name.match(/(\.sql|\.js)$/))
-    .sort((m1, m2) => {
-      const id1 = getMigrationId(m1);
-      const id2 = getMigrationId(m2);
-      if (id1 < id2) {
-        return -1;
-      } else if (id1 > id2) {
-        return 1;
+  let files = [];
+  try {
+    files = await fs.listDir(migrationsDir);
+  } catch (e) {
+    logger.error('Could not list migrations directory', e);
+  }
+
+  const list = files.filter(name => name.match(/(\.sql|\.js)$/));
+
+  // Add bundled JS migrations that might be missing from the filesystem
+  // (common in web environments after an update)
+  if (migrationsDir === fs.migrationsPath) {
+    for (const idStr of Object.keys(javascriptMigrations)) {
+      const id = parseInt(idStr);
+      if (!list.some(name => getMigrationId(name) === id)) {
+        list.push(`${id}_bundled.js`);
       }
-      return 0;
-    });
+    }
+  }
+
+  return list.sort((m1, m2) => {
+    const id1 = getMigrationId(m1);
+    const id2 = getMigrationId(m2);
+    if (id1 < id2) {
+      return -1;
+    } else if (id1 > id2) {
+      return 1;
+    }
+    return 0;
+  });
 }
 
 export function getPending(appliedIds: number[], all: string[]): string[] {
@@ -132,15 +153,17 @@ export async function applyMigration(
   name: string,
   migrationsDir: string,
 ): Promise<void> {
-  const code = await fs.readFile(fs.join(migrationsDir, name));
-  if (name.match(/\.js$/)) {
-    await applyJavaScript(db, getMigrationId(name));
+  const id = getMigrationId(name);
+  const isBundled = name.endsWith('_bundled.js');
+
+  if (isBundled || name.match(/\.js$/)) {
+    await applyJavaScript(db, id);
   } else {
+    const code = await fs.readFile(fs.join(migrationsDir, name));
     await applySql(db, code);
   }
-  sqlite.runQuery(db, 'INSERT INTO __migrations__ (id) VALUES (?)', [
-    getMigrationId(name),
-  ]);
+
+  sqlite.runQuery(db, 'INSERT INTO __migrations__ (id) VALUES (?)', [id]);
 }
 
 function checkDatabaseValidity(

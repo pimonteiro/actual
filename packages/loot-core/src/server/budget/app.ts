@@ -65,6 +65,9 @@ export type BudgetHandlers = {
   'budget/store-note-cleanups': typeof storeNoteCleanups;
   'budget/render-note-templates': typeof goalNoteActions.unparse;
   'budget/create-cleanup-group': typeof cleanupGroupActions.createCleanupGroup;
+  'budget/set-custom-period': typeof setCustomBudgetPeriod;
+  'budget/delete-custom-period': typeof deleteCustomBudgetPeriod;
+  'budget/get-custom-periods': typeof getCustomBudgetPeriods;
 };
 
 export const app = createApp<BudgetHandlers>();
@@ -177,6 +180,15 @@ app.method(
   'budget/create-cleanup-group',
   mutator(undoable(cleanupGroupActions.createCleanupGroup)),
 );
+app.method(
+  'budget/set-custom-period',
+  mutator(undoable(setCustomBudgetPeriod)),
+);
+app.method(
+  'budget/delete-custom-period',
+  mutator(undoable(deleteCustomBudgetPeriod)),
+);
+app.method('budget/get-custom-periods', getCustomBudgetPeriods);
 
 // Server must return AQL entities not the raw DB data
 async function getCategories({ hidden }: { hidden?: boolean } = {}) {
@@ -505,4 +517,70 @@ async function isCategoryTransferRequired({
 
     return value != null && value !== 0;
   });
+}
+
+async function setCustomBudgetPeriod({
+  month,
+  start_date,
+  end_date,
+}: {
+  month: string;
+  start_date: string;
+  end_date: string;
+}) {
+  // Validate no overlaps with other ACTIVE custom periods
+  const allPeriods = await db.all<db.DbCustomBudgetPeriod>(
+    'SELECT * FROM custom_budget_periods WHERE tombstone = 0 AND month != ?',
+    [month],
+  );
+
+  for (const p of allPeriods) {
+    if (
+      (start_date >= p.start_date && start_date <= p.end_date) ||
+      (end_date >= p.start_date && end_date <= p.end_date) ||
+      (p.start_date >= start_date && p.start_date <= end_date)
+    ) {
+      const conflictingMonth = monthUtils.format(p.month, 'MMMM yyyy');
+      throw APIError(
+        `This period overlaps with the configured period for ${conflictingMonth} (${p.start_date} to ${p.end_date}).`,
+      );
+    }
+  }
+
+  const existing = await db.first<db.DbCustomBudgetPeriod>(
+    'SELECT id FROM custom_budget_periods WHERE month = ?',
+    [month],
+  );
+
+  if (existing) {
+    await db.update('custom_budget_periods', {
+      id: existing.id,
+      start_date,
+      end_date,
+      tombstone: 0,
+    });
+  } else {
+    await db.insertWithUUID('custom_budget_periods', {
+      month,
+      start_date,
+      end_date,
+    });
+  }
+}
+
+async function deleteCustomBudgetPeriod({ month }: { month: string }) {
+  const existing = await db.first<db.DbCustomBudgetPeriod>(
+    'SELECT id FROM custom_budget_periods WHERE month = ?',
+    [month],
+  );
+
+  if (existing) {
+    await db.delete_('custom_budget_periods', existing.id);
+  }
+}
+
+async function getCustomBudgetPeriods() {
+  return db.all<db.DbCustomBudgetPeriod>(
+    'SELECT * FROM custom_budget_periods WHERE tombstone = 0',
+  );
 }

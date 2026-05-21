@@ -98,6 +98,13 @@ export const schema = {
     sort_order: f('float'),
     tombstone: f('boolean'),
   },
+  custom_budget_periods: {
+    id: f('id'),
+    month: f('string'),
+    start_date: f('date'),
+    end_date: f('date'),
+    tombstone: f('boolean'),
+  },
   cleanup_groups: {
     id: f('id'),
     name: f('string'),

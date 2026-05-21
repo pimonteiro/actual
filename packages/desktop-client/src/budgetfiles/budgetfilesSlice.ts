@@ -1,6 +1,7 @@
 import { send } from '@actual-app/core/platform/client/connection';
 import type { RemoteFile } from '@actual-app/core/server/cloud-storage';
 import { getDownloadError, getSyncError } from '@actual-app/core/shared/errors';
+import * as monthUtils from '@actual-app/core/shared/months';
 import type { Budget } from '@actual-app/core/types/budget';
 import type { File } from '@actual-app/core/types/file';
 import type { Handlers } from '@actual-app/core/types/handlers';
@@ -89,6 +90,8 @@ export const loadBudget = createAppAsyncThunk(
     } else {
       dispatch(closeModal());
       await dispatch(loadPrefs());
+      const periods = await send('budget/get-custom-periods');
+      monthUtils.setCustomPeriods(periods);
     }
 
     dispatch(setAppState({ loadingText: null }));

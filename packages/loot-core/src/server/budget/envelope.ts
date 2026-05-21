@@ -293,8 +293,14 @@ export function handleCategoryChange(months, oldValue, newValue) {
       const prevSheetName = monthUtils.sheetForMonth(prevMonth);
       const sheetName = monthUtils.sheetForMonth(month);
       const { start, end } = monthUtils.bounds(month);
-
-      createCategoryFromBase(newValue, sheetName, prevSheetName, start, end);
+      createCategoryFromBase(
+        newValue,
+        sheetName,
+        prevSheetName,
+        start,
+        end,
+        month,
+      );
 
       const id = newValue.id;
       const groupId = newValue.cat_group;

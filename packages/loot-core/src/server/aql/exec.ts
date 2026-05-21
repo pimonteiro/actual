@@ -1,3 +1,4 @@
+import { logger } from '#platform/server/log';
 import * as db from '#server/db';
 // @ts-strict-ignore
 import type { QueryState } from '#shared/query';
@@ -40,6 +41,7 @@ export async function execQuery(
   outputTypes: OutputTypes,
 ) {
   const sql = defaultConstructQuery(queryState, compilerState, sqlPieces);
+  logger.log('AQL Executing:', sql, params);
   const data = await db.all<Record<string, unknown>>(sql, params);
   applyTypes(data, outputTypes);
   return data;

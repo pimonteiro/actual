@@ -537,17 +537,19 @@ export function conditionsToAQL(
                 case 'date':
                   return { date: value.date };
                 case 'month': {
-                  const low = value.date + '-00';
-                  const high = value.date + '-99';
                   return {
-                    $and: [{ date: { $gte: low } }, { date: { $lte: high } }],
+                    date: {
+                      $transform: '$month',
+                      $eq: value.date,
+                    },
                   };
                 }
                 case 'year': {
-                  const low = value.date + '-00-00';
-                  const high = value.date + '-99-99';
                   return {
-                    $and: [{ date: { $gte: low } }, { date: { $lte: high } }],
+                    date: {
+                      $transform: '$year',
+                      $eq: value.date,
+                    },
                   };
                 }
                 default:

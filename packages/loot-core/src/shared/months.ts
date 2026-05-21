@@ -152,7 +152,7 @@ export function currentMonth(): string {
   if (global.IS_TESTING || Platform.isPlaywright) {
     return global.currentMonth || '2017-01';
   } else {
-    return d.format(new Date(), 'yyyy-MM');
+    return monthFromDate(new Date());
   }
 }
 

@@ -79,7 +79,7 @@ jobs:
         uses: ./.github/actions/setup
         with:
           # Avoid restoring potentially poisoned caches in release jobs.
-          cache: 'false'
+          cache: "false"
       - name: Build Web
         run: yarn build:server
 
@@ -113,8 +113,5 @@ jobs:
           file: packages/sync-server/docker/${{ matrix.os }}.Dockerfile
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-s.tags }}
           build-args: |
             GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}

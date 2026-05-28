@@ -50,6 +50,28 @@ async function saveSyncedPrefs({
     id,
     value,
   });
+
+  if (id === 'flags.customBudgets') {
+    const budget = await import('#server/budget/base');
+    const sheet = await import('#server/sheet');
+
+    await budget.loadCustomBudgetPeriods();
+
+    const meta = sheet.get().meta();
+    meta.createdMonths = new Set();
+    const nodes = sheet.get().getNodes();
+    db.transaction(() => {
+      for (const name of nodes.keys()) {
+        const [sheetName, cellName] = name.split('!');
+        if (sheetName.match(/^budget\d+/)) {
+          sheet.get().deleteCell(sheetName, cellName);
+        }
+      }
+    });
+
+    await budget.createAllBudgets();
+    await sheet.loadUserBudgets(db);
+  }
 }
 
 async function getSyncedPrefs(): Promise<SyncedPrefs> {

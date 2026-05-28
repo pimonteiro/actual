@@ -95,3 +95,13 @@ storybook-static
 .actualrc.yaml
 .actualrc.yml
 actual.config.js
+
+# Local testing and scratch files
+test-spreadsheet.js
+
+# Actual Budget MCP local files
+actual-budget-mcp/
+
+# Local tarballs
+*.tgz
+packages/*/*.tgz

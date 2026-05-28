@@ -84,6 +84,7 @@ export function _parse(value: DateLike): Date {
 export const parseDate = _parse;
 
 let customPeriods: Map<string, { start: string; end: string }> = new Map();
+let isEnabled = false;
 
 export function setCustomPeriods(
   periods: { month: string; start_date: string; end_date: string }[],
@@ -93,25 +94,33 @@ export function setCustomPeriods(
   );
 }
 
+export function setCustomBudgetsEnabled(enabled: boolean) {
+  isEnabled = enabled;
+}
+
 export function yearFromDate(date: DateLike): string {
   return d.format(_parse(date), 'yyyy');
 }
 
 export function monthFromDate(date: DateLike): string {
   const dayStr = dayFromDate(date);
-  for (const [month, bounds] of customPeriods.entries()) {
-    if (dayStr >= bounds.start && dayStr <= bounds.end) {
-      return month;
+  if (isEnabled) {
+    for (const [month, bounds] of customPeriods.entries()) {
+      if (dayStr >= bounds.start && dayStr <= bounds.end) {
+        return month;
+      }
     }
   }
 
   const naturalMonth = d.format(_parse(date), 'yyyy-MM');
-  const naturalBounds = customPeriods.get(naturalMonth);
-  if (naturalBounds) {
-    if (dayStr < naturalBounds.start) {
-      return prevMonth(naturalMonth);
-    } else if (dayStr > naturalBounds.end) {
-      return nextMonth(naturalMonth);
+  if (isEnabled) {
+    const naturalBounds = customPeriods.get(naturalMonth);
+    if (naturalBounds) {
+      if (dayStr < naturalBounds.start) {
+        return prevMonth(naturalMonth);
+      } else if (dayStr > naturalBounds.end) {
+        return nextMonth(naturalMonth);
+      }
     }
   }
 
@@ -272,7 +281,7 @@ export function isCurrentDay(day: DateLike): boolean {
 // probably live elsewhere
 export function bounds(month: DateLike): { start: number; end: number } {
   const monthStr = typeof month === 'string' ? month : monthFromDate(month);
-  const custom = customPeriods.get(monthStr);
+  const custom = isEnabled ? customPeriods.get(monthStr) : null;
   if (custom) {
     return {
       start: parseInt(custom.start.replace(/-/g, '')),
@@ -283,6 +292,21 @@ export function bounds(month: DateLike): { start: number; end: number } {
   return {
     start: parseInt(d.format(d.startOfMonth(_parse(month)), 'yyyyMMdd')),
     end: parseInt(d.format(d.endOfMonth(_parse(month)), 'yyyyMMdd')),
+  };
+}
+
+export function getMonthBounds(month: string): { start: string; end: string } {
+  const custom = isEnabled ? customPeriods.get(month) : null;
+  if (custom) {
+    return {
+      start: custom.start,
+      end: custom.end,
+    };
+  }
+
+  return {
+    start: d.format(d.startOfMonth(_parse(month)), 'yyyy-MM-dd'),
+    end: d.format(d.endOfMonth(_parse(month)), 'yyyy-MM-dd'),
   };
 }
 

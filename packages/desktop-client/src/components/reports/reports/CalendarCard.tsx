@@ -78,10 +78,13 @@ export function CalendarCard({
     void fetchLatestTransaction();
   }, []);
 
+  const currentMonthBounds = monthUtils.getMonthBounds(
+    monthUtils.currentMonth(),
+  );
   const [start, end] = calculateTimeRange(
     meta?.timeFrame,
     {
-      start: monthUtils.dayFromDate(monthUtils.currentMonth()),
+      start: currentMonthBounds.start,
       end: monthUtils.currentDay(),
       mode: 'full',
     },

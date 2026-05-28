@@ -29,13 +29,15 @@ export function createSpendingSpreadsheet({
   compareTo,
   budgetType = 'envelope',
 }: createSpendingSpreadsheetProps) {
-  const startDate = monthUtils.subMonths(compare, 3) + '-01';
-  const endDate = monthUtils.getMonthEnd(compare + '-01');
-  const startDateTo = compareTo + '-01';
-  const endDateTo = monthUtils.getMonthEnd(compareTo + '-01');
+  const startDate = monthUtils.getMonthBounds(
+    monthUtils.subMonths(compare, 3),
+  ).start;
+  const endDate = monthUtils.getMonthBounds(compare).end;
+  const startDateTo = monthUtils.getMonthBounds(compareTo).start;
+  const endDateTo = monthUtils.getMonthBounds(compareTo).end;
   const interval = 'Daily';
   const compareInterval = monthUtils.dayRangeInclusive(
-    compare + '-01',
+    monthUtils.getMonthBounds(compare).start,
     endDate,
   );
 
@@ -175,7 +177,7 @@ export function createSpendingSpreadsheet({
           let perIntervalDebts = 0;
 
           if (
-            month.month === monthUtils.getMonth(intervalItem) &&
+            month.month === monthUtils.monthFromDate(intervalItem) &&
             day === offsetDay
           ) {
             const intervalAssets = combineAssets
@@ -237,14 +239,15 @@ export function createSpendingSpreadsheet({
 
           return arr;
         }, []);
-        const maxCumulative = data.reduce((a, b) =>
-          b.cumulative === null ? a : b,
-        ).cumulative;
+        const maxCumulative =
+          data.length > 0
+            ? data.reduce((a, b) => (b.cumulative === null ? a : b)).cumulative
+            : null;
 
         const totalDaily = data.reduce((a, v) => a + v.totalTotals, 0);
 
         return {
-          date: data[0].date,
+          date: data.length > 0 ? data[0].date : undefined,
           cumulative: maxCumulative,
           daily: totalDaily,
           month: month.month,

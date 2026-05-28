@@ -11,6 +11,7 @@ import {
 import { Popover } from '@actual-app/components/popover';
 import { SpaceBetween } from '@actual-app/components/space-between';
 import { styles } from '@actual-app/components/styles';
+import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 import * as monthUtils from '@actual-app/core/shared/months';
@@ -18,6 +19,8 @@ import { css } from '@emotion/css';
 
 import { useTrackingBudget } from '#components/budget/tracking/TrackingBudgetContext';
 import { NotesButton } from '#components/NotesButton';
+import { useDateFormat } from '#hooks/useDateFormat';
+import { useFeatureFlag } from '#hooks/useFeatureFlag';
 import { useLocale } from '#hooks/useLocale';
 import { SheetNameProvider } from '#hooks/useSheetName';
 import { useUndo } from '#hooks/useUndo';
@@ -32,6 +35,9 @@ type BudgetSummaryProps = {
 };
 export function BudgetSummary({ month }: BudgetSummaryProps) {
   const locale = useLocale();
+  const dateFormat = useDateFormat() || 'MM/dd/yyyy';
+  const isCustomBudgetsEnabled = useFeatureFlag('customBudgets');
+  const bounds = monthUtils.getMonthBounds(month);
   const { t } = useTranslation();
   const {
     currentMonth,
@@ -127,6 +133,21 @@ export function BudgetSummary({ month }: BudgetSummaryProps) {
           >
             {monthUtils.format(month, 'MMMM', locale)}
           </div>
+
+          {isCustomBudgetsEnabled && (
+            <Text
+              style={{
+                textAlign: 'center',
+                fontSize: 11,
+                color: theme.pageTextLight,
+                opacity: 0.8,
+                marginTop: 2,
+              }}
+            >
+              {monthUtils.format(bounds.start, dateFormat)} –{' '}
+              {monthUtils.format(bounds.end, dateFormat)}
+            </Text>
+          )}
 
           <View
             style={{

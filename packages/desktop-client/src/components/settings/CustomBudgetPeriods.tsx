@@ -33,7 +33,7 @@ export function CustomBudgetPeriodsSettings() {
       send('budget/get-custom-periods'),
       send('get-budget-bounds'),
     ]);
-    setPeriods(periodsRes.sort((a, b) => a.month.localeCompare(b.month)));
+    setPeriods(periodsRes.sort((a, b) => b.month.localeCompare(a.month)));
     setBounds(boundsRes);
     setLoading(false);
   };
@@ -114,7 +114,7 @@ export function CustomBudgetPeriodsSettings() {
       <View style={{ fontSize: 16, fontWeight: 500, marginBottom: 5 }}>
         <Trans>Custom budget periods</Trans>
       </View>
-      <View style={{ gap: 10, maxWidth: 600, width: '100%' }}>
+      <View style={{ gap: 10, maxWidth: '100%', width: '100%' }}>
         <Text>
           <Trans>
             Define custom start and end dates for your budget months. This is
@@ -129,6 +129,8 @@ export function CustomBudgetPeriodsSettings() {
               border: `1px solid ${theme.tableBorder}`,
               borderRadius: 6,
               overflow: 'hidden',
+              width: '100%',
+              maxWidth: 600,
             }}
           >
             {periods.map((p, index) => (
@@ -148,22 +150,33 @@ export function CustomBudgetPeriodsSettings() {
                   flexWrap: 'wrap',
                 }}
               >
-                <View style={{ flex: 1, minWidth: 150, gap: 4 }}>
+                <View style={{ flex: '1 1 200px', minWidth: 0, gap: 4 }}>
                   <Text
                     style={{
                       fontWeight: 600,
                       fontSize: 14,
                       color: theme.pageText,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
                   >
                     {monthUtils.format(p.month, 'MMMM yyyy')}
                   </Text>
-                  <Text style={{ fontSize: 13, color: theme.pageTextSubdued }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: theme.pageTextSubdued,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
                     {monthUtils.format(p.start_date, dateFormat)} –{' '}
                     {monthUtils.format(p.end_date, dateFormat)}
                   </Text>
                 </View>
-                <View style={{ flexDirection: 'row', gap: 5 }}>
+                <View style={{ flexDirection: 'row', gap: 5, flexShrink: 0 }}>
                   <Button
                     onPress={() => {
                       setNewMonth(p.month);
@@ -191,11 +204,13 @@ export function CustomBudgetPeriodsSettings() {
         <View
           style={{
             marginTop: 20,
-            gap: 10,
+            gap: 15,
             padding: 15,
             backgroundColor: theme.tableBackground,
             borderRadius: 4,
             border: `2px dashed ${theme.tableBorder}`,
+            maxWidth: 600,
+            width: '100%',
           }}
         >
           <Text style={{ fontWeight: 'bold' }}>
@@ -209,7 +224,7 @@ export function CustomBudgetPeriodsSettings() {
               flexWrap: 'wrap',
             }}
           >
-            <View style={{ flex: 1, minWidth: 150 }}>
+            <View style={{ flex: '1 1 150px', minWidth: 150 }}>
               <Text
                 style={{
                   fontSize: 12,
@@ -226,7 +241,7 @@ export function CustomBudgetPeriodsSettings() {
                 defaultLabel={t('Select month...')}
               />
             </View>
-            <View style={{ flex: 1, minWidth: 150 }}>
+            <View style={{ flex: '1 1 150px', minWidth: 150 }}>
               <Text
                 style={{
                   fontSize: 12,
@@ -243,7 +258,7 @@ export function CustomBudgetPeriodsSettings() {
                 onSelect={setNewStart}
               />
             </View>
-            <View style={{ flex: 1, minWidth: 150 }}>
+            <View style={{ flex: '1 1 150px', minWidth: 150 }}>
               <Text
                 style={{
                   fontSize: 12,
@@ -272,7 +287,11 @@ export function CustomBudgetPeriodsSettings() {
             onPress={onSave}
             variant="primary"
             isDisabled={!newMonth || !newStart || !newEnd}
-            style={{ marginTop: 10, padding: '5px 20px' }}
+            style={{
+              alignSelf: 'flex-start',
+              marginTop: 10,
+              padding: '5px 20px',
+            }}
           >
             {t('Save Period Override')}
           </Button>

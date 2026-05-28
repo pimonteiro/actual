@@ -5,6 +5,7 @@ test('range returns a full range', () => {
 });
 
 test('monthFromDate with custom periods fallback logic', () => {
+  monthUtils.setCustomBudgetsEnabled(true);
   monthUtils.setCustomPeriods([
     { month: '2026-05', start_date: '2026-04-27', end_date: '2026-05-28' },
   ]);
@@ -27,5 +28,6 @@ test('monthFromDate with custom periods fallback logic', () => {
     expect(monthUtils.monthFromDate('2026-03-15')).toBe('2026-03');
   } finally {
     monthUtils.setCustomPeriods([]);
+    monthUtils.setCustomBudgetsEnabled(false);
   }
 });

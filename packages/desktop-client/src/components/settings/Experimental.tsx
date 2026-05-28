@@ -238,6 +238,9 @@ export function ExperimentalFeatures() {
             >
               <Trans>Enable Banking sync (EU banks)</Trans>
             </FeatureToggle>
+            <FeatureToggle flag="customBudgets">
+              <Trans>Custom Budget Periods</Trans>
+            </FeatureToggle>
             {showServerPrefs && (
               <ServerFeatureToggle
                 prefName="flags.plugins"

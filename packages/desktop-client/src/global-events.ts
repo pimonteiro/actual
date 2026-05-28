@@ -83,6 +83,14 @@ export function handleGlobalEvents(store: AppStore, queryClient: QueryClient) {
       );
     }
 
+    if (
+      tables.includes('preferences') ||
+      tables.includes('prefs') ||
+      tables.includes('custom_budget_periods')
+    ) {
+      void store.dispatch(loadPrefs());
+    }
+
     const tagged = undo.getTaggedState(undoTag);
 
     if (tagged) {

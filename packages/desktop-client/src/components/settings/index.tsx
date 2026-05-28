@@ -173,6 +173,7 @@ export function Settings() {
   const [budgetName] = useMetadataPref('budgetName');
   const dispatch = useDispatch();
   const isCurrencyExperimentalEnabled = useFeatureFlag('currency');
+  const isCustomBudgetsExperimentalEnabled = useFeatureFlag('customBudgets');
   const [_, setDefaultCurrencyCodePref] = useSyncedPref('defaultCurrencyCode');
 
   const onCloseBudget = () => {
@@ -245,7 +246,7 @@ export function Settings() {
         <AuthSettings />
         <EncryptionSettings />
         <BudgetTypeSettings />
-        <CustomBudgetPeriodsSettings />
+        {isCustomBudgetsExperimentalEnabled && <CustomBudgetPeriodsSettings />}
         {isElectron() && <Backups />}
         <ExportBudget />
         <AdvancedToggle>

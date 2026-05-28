@@ -307,7 +307,10 @@ describe('Database', () => {
     );
     expect(res[0].m).toBe(202604);
 
-    // 2. Set custom periods
+    // 2. Set custom periods and enable feature flag in db
+    db.runQuery(
+      `INSERT INTO preferences (id, value) VALUES ('flags.customBudgets', 'true')`,
+    );
     db.runQuery(
       `INSERT INTO custom_budget_periods (id, month, start_date, end_date, tombstone)
        VALUES ('1', '2026-05', '2026-04-27', '2026-05-28', 0)`,
@@ -334,8 +337,9 @@ describe('Database', () => {
       );
       expect(res[0].m).toBe(202606);
     } finally {
-      // Clean up custom budget periods
+      // Clean up custom budget periods and preferences
       db.runQuery('DELETE FROM custom_budget_periods');
+      db.runQuery("DELETE FROM preferences WHERE id = 'flags.customBudgets'");
       await loadCustomBudgetPeriods();
     }
   });

@@ -18,6 +18,12 @@ export function getBudgetType() {
 }
 
 export async function loadCustomBudgetPeriods() {
+  const row = await db.first<db.DbPreference>(
+    "SELECT value FROM preferences WHERE id = 'flags.customBudgets'",
+  );
+  const isEnabled = row ? row.value === 'true' : false;
+  monthUtils.setCustomBudgetsEnabled(isEnabled);
+
   const periods = await db.all<db.DbCustomBudgetPeriod>(
     'SELECT * FROM custom_budget_periods WHERE tombstone = 0',
   );
@@ -232,8 +238,35 @@ export function triggerBudgetChanges(oldValues, newValues) {
               }
             });
 
-            void createAllBudgets();
+            void createAllBudgets().then(() => {
+              void sheet.loadUserBudgets(db);
+            });
           });
+        } else if (table === 'preferences') {
+          if (newValue.id === 'flags.customBudgets') {
+            const oldValueVal = oldValue ? oldValue.value : null;
+            if (oldValueVal !== newValue.value) {
+              void loadCustomBudgetPeriods().then(() => {
+                const meta = sheet.get().meta();
+                meta.createdMonths = new Set();
+
+                // Go through and force all the cells to be recomputed
+                const nodes = sheet.get().getNodes();
+                db.transaction(() => {
+                  for (const name of nodes.keys()) {
+                    const [sheetName, cellName] = name.split('!');
+                    if (sheetName.match(/^budget\d+/)) {
+                      sheet.get().deleteCell(sheetName, cellName);
+                    }
+                  }
+                });
+
+                void createAllBudgets().then(() => {
+                  void sheet.loadUserBudgets(db);
+                });
+              });
+            }
+          }
         }
       });
     });

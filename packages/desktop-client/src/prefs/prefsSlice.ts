@@ -1,4 +1,5 @@
 import { send } from '@actual-app/core/platform/client/connection';
+import * as monthUtils from '@actual-app/core/shared/months';
 import {
   parseNumberFormat,
   setNumberFormat,
@@ -45,9 +46,12 @@ export const loadPrefs = createAppAsyncThunk(
       dispatch(closeModal());
     }
 
-    const [globalPrefs, syncedPrefs] = await Promise.all([
+    const [globalPrefs, syncedPrefs, periods] = await Promise.all([
       send('load-global-prefs'),
       send('preferences/get'),
+      prefs && prefs.id
+        ? send('budget/get-custom-periods')
+        : Promise.resolve([]),
     ]);
 
     dispatch(
@@ -61,6 +65,12 @@ export const loadPrefs = createAppAsyncThunk(
         hideFraction: syncedPrefs.hideFraction,
       }),
     );
+    monthUtils.setCustomBudgetsEnabled(
+      syncedPrefs['flags.customBudgets'] === 'true',
+    );
+    if (prefs && prefs.id) {
+      monthUtils.setCustomPeriods(periods);
+    }
 
     // We need to load translations before the app renders
     setI18NextLanguage(globalPrefs.language ?? '');
@@ -128,6 +138,11 @@ export const saveSyncedPrefs = createAppAsyncThunk(
         }),
       ),
     );
+    if (prefs['flags.customBudgets'] !== undefined) {
+      monthUtils.setCustomBudgetsEnabled(
+        prefs['flags.customBudgets'] === 'true',
+      );
+    }
     dispatch(mergeSyncedPrefs(prefs));
   },
 );

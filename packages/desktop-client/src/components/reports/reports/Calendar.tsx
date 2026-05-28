@@ -98,7 +98,7 @@ function CalendarInner({ widget, parameters }: CalendarInnerProps) {
   const format = useFormat();
 
   const [start, setStart] = useState(
-    monthUtils.dayFromDate(monthUtils.currentMonth()),
+    monthUtils.getMonthBounds(monthUtils.currentMonth()).start,
   );
   const [end, setEnd] = useState(monthUtils.currentDay());
   const [mode, setMode] = useState<TimeFrame['mode']>('full');
@@ -304,7 +304,7 @@ function CalendarInner({ widget, parameters }: CalendarInnerProps) {
       const [initialStart, initialEnd, initialMode] = calculateTimeRange(
         widget?.meta?.timeFrame,
         {
-          start: monthUtils.dayFromDate(monthUtils.currentMonth()),
+          start: monthUtils.getMonthBounds(monthUtils.currentMonth()).start,
           end: monthUtils.currentDay(),
           mode: 'full',
         },
